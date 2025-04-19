@@ -13,19 +13,15 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { Dashboard } from "@/components/dashboard";
 import { BlocksPage } from "@/components/blocks-page";
 import { EventsPage } from "@/components/events-page";
-
-// Create basic page components
-const Blocks = () => <div className="p-4">Blocks Page</div>;
-const Events = () => <div className="p-4">Events Overview Page</div>;
-const EventPage = () => {
-  const eventName = window.location.pathname.split("/").pop();
-  return <div className="p-4">Event Details: {eventName}</div>;
-};
+import { EventDetailPage } from "@/components/event-detail-page";
+import { Dashboard } from "./components/dashboard";
+import { GasTrackerPage } from "@/components/gas-tracker";
+import { ConnectionStatusBanner } from "@/components/connection-status-banner";
+import { ConnectionProvider } from "@/contexts/connection-context";
 
 function PageHeader() {
   const location = useLocation();
@@ -83,24 +79,92 @@ function PageHeader() {
 }
 
 export default function App() {
+  const [showConnectionError, setShowConnectionError] = useState(false);
+
+  // Calculate additional margin for the content container
+  const contentStyle = {
+    marginTop: showConnectionError ? "56px" : "0", // Adjust banner height as needed
+  };
+
+  // Create a style element to override the sidebar positioning when banner is visible
+  useEffect(() => {
+    // Create a style element if it doesn't exist
+    let styleEl = document.getElementById("sidebar-override-style");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "sidebar-override-style";
+      document.head.appendChild(styleEl);
+    }
+
+    // Update the style content based on banner visibility
+    if (showConnectionError) {
+      styleEl.textContent = `
+        /* Override sidebar positioning when banner is visible */
+        .fixed[data-sidebar="sidebar"],
+        div[class*="fixed inset-y-0 z-10"] {
+          top: 56px !important;
+          height: calc(100vh - 56px) !important;
+        }
+      `;
+    } else {
+      styleEl.textContent = "";
+    }
+
+    return () => {
+      if (styleEl) {
+        styleEl.textContent = "";
+      }
+    };
+  }, [showConnectionError]);
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_ROOT}/events`);
+        setShowConnectionError(!response.ok);
+      } catch {
+        setShowConnectionError(true);
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <ThemeProvider defaultTheme="system" storageKey="app-theme">
-      <Router>
-        <SidebarProvider>
-          <div className="flex min-h-screen">
-            <AppSidebar className="hidden md:flex" />
-            <main className="flex-1">
-              <PageHeader />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/blocks" element={<BlocksPage />} />
-                <Route path="/events" element={<EventsPage />} />
-                <Route path="/events/:eventName" element={<EventsPage />} />
-              </Routes>
-            </main>
+    <ConnectionProvider>
+      <ThemeProvider defaultTheme="system" storageKey="app-theme">
+        <Router>
+          <div className="min-h-screen flex flex-col relative">
+            <ConnectionStatusBanner
+              isVisible={showConnectionError}
+              onDismiss={() => setShowConnectionError(false)}
+            />
+
+            <div className="flex-1 flex transition-all" style={contentStyle}>
+              <SidebarProvider>
+                <AppSidebar className="hidden md:flex" />
+                <main className="flex-1 w-full">
+                  <PageHeader />
+                  <div className="w-full">
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/blocks" element={<BlocksPage />} />
+                      <Route path="/gas" element={<GasTrackerPage />} />
+                      <Route path="/events" element={<EventsPage />} />
+                      <Route
+                        path="/events/:eventId"
+                        element={<EventDetailPage />}
+                      />
+                    </Routes>
+                  </div>
+                </main>
+              </SidebarProvider>
+            </div>
           </div>
-        </SidebarProvider>
-      </Router>
-    </ThemeProvider>
+        </Router>
+      </ThemeProvider>
+    </ConnectionProvider>
   );
 }

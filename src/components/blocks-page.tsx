@@ -79,7 +79,12 @@ export function BlocksPage() {
   const mockData = Array.from({ length: 25 }, (_, i) => generateMockBlock(i));
 
   return (
-    <div className="w-full h-full p-4">
+    <div className="flex flex-col min-h-[calc(100vh-4rem)] p-4 space-y-6 w-full">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Blocks</h2>
+        <p className="text-muted-foreground">Recent blocks on the network.</p>
+      </div>
+
       <DataTable
         columns={columns}
         data={mockData}

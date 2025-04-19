@@ -18,7 +18,7 @@ export function StatsCard({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-4 text-card-foreground",
+        "flex-1 rounded-lg border bg-card p-4 text-card-foreground",
         className
       )}
     >

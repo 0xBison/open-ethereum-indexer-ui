@@ -73,19 +73,28 @@ export function EventsPage() {
   const mockData = Array.from({ length: 25 }, (_, i) => generateMockEvent(i));
 
   return (
-    <div className="w-full h-full p-4">
-      <DataTable
-        columns={columns}
-        data={mockData}
-        pageSize={25}
-        currentPage={currentPage}
-        totalPages={10}
-        onPageChange={setCurrentPage}
-        sortDirection={sortDirection}
-        onSortChange={() =>
-          setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
-        }
-      />
+    <div className="flex flex-col min-h-screen p-4 space-y-6 w-full">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold tracking-tight">Events</h2>
+        <p className="text-muted-foreground">
+          All events from indexed contracts.
+        </p>
+      </div>
+
+      <div className="w-full">
+        <DataTable
+          columns={columns}
+          data={mockData}
+          pageSize={25}
+          currentPage={currentPage}
+          totalPages={10}
+          onPageChange={setCurrentPage}
+          sortDirection={sortDirection}
+          onSortChange={() =>
+            setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+          }
+        />
+      </div>
     </div>
   );
 }
